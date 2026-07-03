@@ -292,6 +292,34 @@ body {
   font-size: 14px;
 }
 
+.date-label {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+input[type="date"] {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  background: #f8fafc;
+}
+input[type="date"]:focus { border-color: var(--blue); }
+
+.btn-apply {
+  padding: 8px 16px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-apply:hover { background: var(--blue-dark); }
+
 /* ── TABLE ─────────────────────────────── */
 .table-wrap { overflow-x: auto; }
 

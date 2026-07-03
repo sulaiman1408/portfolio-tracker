@@ -63,6 +63,39 @@
       <div class="chart-wrap-tall"><canvas id="history-chart"></canvas></div>
     </section>
 
+    <!-- Periodic performance table -->
+    <section class="chart-card full-width">
+      <div class="table-controls">
+        <h3>Periodic Performance</h3>
+        <div class="table-actions">
+          <select id="perf-freq">
+            <option value="ME">Monthly</option>
+            <option value="W">Weekly</option>
+          </select>
+          <label class="date-label">From</label>
+          <input id="perf-from" type="date">
+          <label class="date-label">To</label>
+          <input id="perf-to" type="date">
+          <button id="perf-apply" class="btn-apply">Apply</button>
+        </div>
+      </div>
+      <div id="perf-status" class="history-status">Loading…</div>
+      <div class="table-wrap">
+        <table id="perf-table">
+          <thead>
+            <tr>
+              <th style="text-align:left">Period</th>
+              <th>Start Value</th>
+              <th>End Value</th>
+              <th>P&amp;L (SAR)</th>
+              <th>P&amp;L %</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- Holdings table -->
     <section class="chart-card full-width">
       <div class="table-controls">

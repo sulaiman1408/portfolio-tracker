@@ -89,6 +89,8 @@ function showDashboard(name) {
   if (name) $("nav-brand").textContent = "📈 " + name;
   loadSummary();
   loadHistory();
+  initPerfTable();
+  loadPerfTable();
 }
 
 $("new-portfolio-btn").addEventListener("click", () => {
@@ -308,6 +310,50 @@ function renderHistory(data) {
       },
     },
   });
+}
+
+// ── periodic performance table ────────────────────────────────────────────────
+function initPerfTable() {
+  // Set default date range: 1 year ago → today
+  const today = new Date();
+  const oneYearAgo = new Date(today);
+  oneYearAgo.setFullYear(today.getFullYear() - 1);
+  $("perf-to").value   = today.toISOString().slice(0, 10);
+  $("perf-from").value = oneYearAgo.toISOString().slice(0, 10);
+
+  $("perf-apply").addEventListener("click", loadPerfTable);
+  $("perf-freq").addEventListener("change", loadPerfTable);
+}
+
+async function loadPerfTable() {
+  const freq = $("perf-freq").value;
+  const from = $("perf-from").value;
+  const to   = $("perf-to").value;
+  const status = $("perf-status");
+  status.textContent = "Loading…";
+
+  try {
+    const res  = await fetch(`/api/performance?session_id=${sessionId}&freq=${freq}&from=${from}&to=${to}`);
+    const data = await res.json();
+    if (!res.ok) { status.textContent = "Error: " + data.error; return; }
+    renderPerfTable(data.rows);
+    status.textContent = "";
+  } catch (e) {
+    status.textContent = "Failed: " + e.message;
+  }
+}
+
+function renderPerfTable(rows) {
+  // Show newest first
+  const reversed = [...rows].reverse();
+  document.querySelector("#perf-table tbody").innerHTML = reversed.map(r => `
+    <tr>
+      <td style="text-align:left">${r.period}</td>
+      <td>${fmtSAR(r.start_value)}</td>
+      <td>${fmtSAR(r.end_value)}</td>
+      <td class="${signClass(r.pl)}">${fmtSAR(r.pl)}</td>
+      <td class="${signClass(r.pl_pct)}">${fmtPct(r.pl_pct)}</td>
+    </tr>`).join("");
 }
 
 // ── holdings table ────────────────────────────────────────────────────────────

@@ -247,73 +247,64 @@ def api_summary():
     })
 
 
-@app.route("/api/history")
-def api_history():
-    sid = request.args.get("session_id")
-    if not sid or sid not in _sessions:
-        return jsonify({"error": "Session not found."}), 404
-
-    df = _sessions[sid]
+def _build_daily_portfolio(df):
+    """Return (port_value, port_cost, price_data) as daily Series."""
     positions = compute_positions(df)
     all_tickers = [p["ticker"] for p in positions]
-
     start_date = df["date"].min().strftime("%Y-%m-%d")
     today = datetime.now().strftime("%Y-%m-%d")
 
-    # Batch-download all prices + TASI
     symbols = all_tickers + [TASI_TICKER]
-    try:
-        raw = yf.download(symbols, start=start_date, end=today, progress=False, auto_adjust=True)
-        if isinstance(raw.columns, pd.MultiIndex):
-            price_data = raw["Close"]
-        else:
-            # Single ticker: flatten
-            price_data = raw[["Close"]].rename(columns={"Close": symbols[0]})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    raw = yf.download(symbols, start=start_date, end=today, progress=False, auto_adjust=True)
+    if isinstance(raw.columns, pd.MultiIndex):
+        price_data = raw["Close"]
+    else:
+        price_data = raw[["Close"]].rename(columns={"Close": symbols[0]})
 
-    # Daily cumulative positions
     txn = df.copy()
     txn["date"] = txn["date"].dt.normalize()
     daily_qty = (
         txn.groupby(["date", "ticker"])["quantity"]
-        .sum()
-        .unstack(fill_value=0)
-        .reindex(price_data.index, fill_value=0)
-        .cumsum()
+        .sum().unstack(fill_value=0)
+        .reindex(price_data.index, fill_value=0).cumsum()
     )
     daily_cost = (
         txn.groupby(["date", "ticker"])["cost"]
-        .sum()
-        .unstack(fill_value=0)
-        .reindex(price_data.index, fill_value=0)
-        .cumsum()
+        .sum().unstack(fill_value=0)
+        .reindex(price_data.index, fill_value=0).cumsum()
     )
 
-    # Portfolio daily value
     port_value = pd.Series(0.0, index=price_data.index)
     for ticker in all_tickers:
         if ticker in price_data.columns and ticker in daily_qty.columns:
             port_value += daily_qty[ticker].ffill().fillna(0) * price_data[ticker].ffill()
 
     port_cost = daily_cost.sum(axis=1)
-
-    # Anchor: first date with actual invested capital
     first_inv = txn["date"].min()
+    return port_value, port_cost, price_data, first_inv
+
+
+@app.route("/api/history")
+def api_history():
+    sid = request.args.get("session_id")
+    if not sid or sid not in _sessions:
+        return jsonify({"error": "Session not found."}), 404
+    try:
+        port_value, port_cost, price_data, first_inv = _build_daily_portfolio(_sessions[sid])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
     valid_idx = price_data.index[price_data.index >= first_inv]
     if valid_idx.empty:
         return jsonify({"error": "No price data found for portfolio period."}), 500
     anchor = valid_idx[0]
 
-    # Slice from anchor
     pv = port_value.loc[anchor:].resample("W").last().dropna()
     pc = port_cost.loc[anchor:].resample("W").last().reindex(pv.index).ffill().fillna(0)
 
     pv_anchor = pv.iloc[0] if pv.iloc[0] != 0 else 1
     port_return = ((pv - pv_anchor) / pv_anchor * 100).round(2)
-    port_cost_normalized = ((pc - float(pc.iloc[0])) / float(pc.iloc[0]) * 100).round(2) if float(pc.iloc[0]) != 0 else pc * 0
 
-    # TASI return %
     tasi_return = None
     if TASI_TICKER in price_data.columns:
         tasi_s = price_data[TASI_TICKER].loc[anchor:].resample("W").last().reindex(pv.index).ffill()
@@ -327,6 +318,59 @@ def api_history():
         "portfolio_value": pv.round(2).tolist(),
         "tasi_return": tasi_return,
     })
+
+
+@app.route("/api/performance")
+def api_performance():
+    sid = request.args.get("session_id")
+    if not sid or sid not in _sessions:
+        return jsonify({"error": "Session not found."}), 404
+
+    freq   = request.args.get("freq", "M")   # "W" or "M"
+    date_from = request.args.get("from")
+    date_to   = request.args.get("to")
+
+    if freq not in ("W", "ME"):
+        freq = "ME"
+
+    try:
+        port_value, _, _, first_inv = _build_daily_portfolio(_sessions[sid])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    # Apply date range filter
+    pv = port_value.copy()
+    if date_from:
+        pv = pv[pv.index >= pd.Timestamp(date_from)]
+    if date_to:
+        pv = pv[pv.index <= pd.Timestamp(date_to)]
+    if pv.empty:
+        return jsonify({"error": "No data in selected date range."}), 400
+
+    # Resample to period end
+    pv_period = pv.resample(freq).last().dropna()
+
+    rows = []
+    for i, (date, end_val) in enumerate(pv_period.items()):
+        start_val = float(pv_period.iloc[i - 1]) if i > 0 else float(pv[pv.index < date].iloc[-1]) if not pv[pv.index < date].empty else end_val
+        pl = end_val - start_val
+        pl_pct = (pl / start_val * 100) if start_val else 0
+
+        if freq == "W":
+            label = date.strftime("Week of %b %d, %Y")
+        else:
+            label = date.strftime("%B %Y")
+
+        rows.append({
+            "period": label,
+            "end_date": date.strftime("%Y-%m-%d"),
+            "start_value": round(start_val, 2),
+            "end_value": round(float(end_val), 2),
+            "pl": round(pl, 2),
+            "pl_pct": round(pl_pct, 2),
+        })
+
+    return jsonify({"rows": rows})
 
 
 if __name__ == "__main__":
