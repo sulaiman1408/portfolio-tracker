@@ -26,7 +26,7 @@
 <!-- ── DASHBOARD VIEW ──────────────────────────────── -->
 <div id="dashboard-view" class="hidden">
   <nav class="navbar">
-    <span class="nav-brand">📈 Portfolio Tracker</span>
+    <span class="nav-brand" id="nav-brand">📈 Portfolio Tracker</span>
     <div class="nav-actions">
       <span id="nav-timestamp"></span>
       <button id="refresh-btn" class="btn-outline">⟳ Refresh</button>
@@ -65,7 +65,20 @@
 
     <!-- Holdings table -->
     <section class="chart-card full-width">
-      <h3>Holdings</h3>
+      <div class="table-controls">
+        <h3>Holdings</h3>
+        <div class="table-actions">
+          <input id="search-box" type="text" placeholder="🔍  Search ticker or company…">
+          <select id="sort-select">
+            <option value="unrealized_pl:desc">Unrealized P&amp;L ↓</option>
+            <option value="unrealized_pl:asc">Unrealized P&amp;L ↑</option>
+            <option value="unrealized_pl_pct:desc">P&amp;L % ↓</option>
+            <option value="unrealized_pl_pct:asc">P&amp;L % ↑</option>
+            <option value="current_value:desc">Value ↓</option>
+            <option value="current_value:asc">Value ↑</option>
+          </select>
+        </div>
+      </div>
       <div class="table-wrap">
         <table id="holdings-table">
           <thead>
@@ -78,6 +91,7 @@
           </thead>
           <tbody></tbody>
         </table>
+        <div id="no-results" class="no-results hidden">No matching holdings.</div>
       </div>
     </section>
 

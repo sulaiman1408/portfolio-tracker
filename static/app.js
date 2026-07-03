@@ -311,9 +311,42 @@ function renderHistory(data) {
 }
 
 // ── holdings table ────────────────────────────────────────────────────────────
+let _allHoldings = [];
+
 function renderTable(holdings) {
-  const sorted = [...holdings].sort((a, b) => (b.unrealized_pl ?? -Infinity) - (a.unrealized_pl ?? -Infinity));
-  document.querySelector("#holdings-table tbody").innerHTML = sorted.map(h => `
+  _allHoldings = holdings;
+  applyTableFilters();
+
+  // Wire up controls once
+  $("sort-select").onchange = applyTableFilters;
+  $("search-box").oninput   = applyTableFilters;
+}
+
+function applyTableFilters() {
+  const query  = ($("search-box").value || "").trim().toLowerCase();
+  const [field, dir] = ($("sort-select").value || "unrealized_pl:desc").split(":");
+
+  let rows = _allHoldings.filter(h =>
+    !query ||
+    h.ticker.toLowerCase().includes(query) ||
+    h.company.toLowerCase().includes(query)
+  );
+
+  rows.sort((a, b) => {
+    const av = a[field] ?? -Infinity;
+    const bv = b[field] ?? -Infinity;
+    return dir === "asc" ? av - bv : bv - av;
+  });
+
+  const noResults = $("no-results");
+  if (rows.length === 0) {
+    noResults.classList.remove("hidden");
+    document.querySelector("#holdings-table tbody").innerHTML = "";
+    return;
+  }
+  noResults.classList.add("hidden");
+
+  document.querySelector("#holdings-table tbody").innerHTML = rows.map(h => `
     <tr>
       <td><strong>${h.ticker}</strong></td>
       <td>${h.company}</td>
