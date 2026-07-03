@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- ── UPLOAD VIEW ─────────────────────────────────── -->
+<div id="upload-view">
+  <div class="upload-card">
+    <div class="upload-logo">📈</div>
+    <h1>Portfolio Tracker</h1>
+    <p class="upload-sub">Paste your Google Sheet link to analyze performance, P&amp;L, and compare against TASI.</p>
+
+    <div class="url-input-wrap">
+      <input id="sheet-url" type="url" placeholder="https://docs.google.com/spreadsheets/d/..." autocomplete="off" spellcheck="false">
+      <button id="load-btn">Load</button>
+    </div>
+
+    <div id="upload-error" class="upload-error hidden"></div>
+    <div id="upload-loading" class="upload-loading hidden">Connecting to Google Sheets…</div>
+
+    <details class="format-help">
+      <summary>How to set up</summary>
+      <ol class="setup-steps">
+        <li>Open your Google Sheet in the browser.</li>
+        <li>Click <strong>Share</strong> → change access to <strong>"Anyone with the link"</strong> → Viewer.</li>
+        <li>Copy the URL from your browser and paste it above.</li>
+      </ol>
+      <p style="margin-top:10px">Your sheet must have these columns:</p>
+      <table class="format-table">
+        <tr><th>Column</th><th>Example</th></tr>
+        <tr><td>ticker</td><td>1150.SR</td></tr>
+        <tr><td>company</td><td>alinma</td></tr>
+        <tr><td>date</td><td>2022-01-22</td></tr>
+        <tr><td>purchase price</td><td>16.40</td></tr>
+        <tr><td>quantity</td><td>1840</td></tr>
+        <tr><td>status</td><td>buy / sell / stock split</td></tr>
+        <tr><td>cost</td><td>30150.00</td></tr>
+      </table>
+    </details>
+  </div>
+</div>
+
+<!-- ── DASHBOARD VIEW ──────────────────────────────── -->
+<div id="dashboard-view" class="hidden">
+  <nav class="navbar">
+    <span class="nav-brand">📈 Portfolio Tracker</span>
+    <div class="nav-actions">
+      <span id="nav-timestamp"></span>
+      <button id="refresh-btn" class="btn-outline">⟳ Refresh</button>
+      <button id="new-portfolio-btn" class="btn-outline">Upload New</button>
+    </div>
+  </nav>
+
+  <main class="dashboard">
+
+    <!-- Summary cards -->
+    <section id="summary-section" class="cards-row"></section>
+
+    <!-- TASI comparison strip -->
+    <section id="tasi-section" class="cards-row tasi-row"></section>
+
+    <!-- Charts row: Allocation + P&L bars -->
+    <section class="charts-row">
+      <div class="chart-card" id="pie-card">
+        <h3>Allocation</h3>
+        <div class="chart-wrap"><canvas id="pie-chart"></canvas></div>
+      </div>
+      <div class="chart-card" id="pl-card">
+        <h3>Unrealized P&amp;L by Stock</h3>
+        <div class="chart-wrap chart-wrap-scroll"><canvas id="pl-chart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Performance over time -->
+    <section class="chart-card full-width">
+      <div class="perf-header">
+        <h3>Portfolio Performance vs TASI</h3>
+        <div id="history-status" class="history-status">Loading chart…</div>
+      </div>
+      <div class="chart-wrap-tall"><canvas id="history-chart"></canvas></div>
+    </section>
+
+    <!-- Holdings table -->
+    <section class="chart-card full-width">
+      <h3>Holdings</h3>
+      <div class="table-wrap">
+        <table id="holdings-table">
+          <thead>
+            <tr>
+              <th>Ticker</th><th>Company</th><th>Qty</th>
+              <th>Avg Cost</th><th>Current Price</th>
+              <th>Cost Basis</th><th>Current Value</th>
+              <th>Unrealized P&amp;L</th><th>P&amp;L %</th><th>Realized P&amp;L</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
