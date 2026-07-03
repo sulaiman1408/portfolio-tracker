@@ -62,39 +62,36 @@ body {
   line-height: 1.5;
 }
 
-.url-input-wrap {
+#portfolio-options {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-#sheet-url {
-  flex: 1;
-  padding: 11px 14px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 14px;
+.portfolio-btn {
+  width: 100%;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text);
-  outline: none;
-  transition: border-color .2s;
+  cursor: pointer;
+  transition: border-color .2s, background .2s, color .2s;
+  text-align: left;
 }
-#sheet-url:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
-#sheet-url::placeholder { color: #94a3b8; }
-
-#load-btn {
-  padding: 11px 22px;
+.portfolio-btn:hover {
+  border-color: var(--blue);
+  background: #eff6ff;
+  color: var(--blue);
+}
+.portfolio-btn.active {
+  border-color: var(--blue);
   background: var(--blue);
   color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .15s;
-  white-space: nowrap;
 }
-#load-btn:hover { background: var(--blue-dark); }
-#load-btn:disabled { background: #93c5fd; cursor: not-allowed; }
 
 .upload-error {
   color: var(--red);

@@ -14,35 +14,12 @@
   <div class="upload-card">
     <div class="upload-logo">📈</div>
     <h1>Portfolio Tracker</h1>
-    <p class="upload-sub">Paste your Google Sheet link to analyze performance, P&amp;L, and compare against TASI.</p>
+    <p class="upload-sub">Choose a portfolio to view its performance, P&amp;L, and comparison against TASI.</p>
 
-    <div class="url-input-wrap">
-      <input id="sheet-url" type="url" placeholder="https://docs.google.com/spreadsheets/d/..." autocomplete="off" spellcheck="false">
-      <button id="load-btn">Load</button>
-    </div>
+    <div id="portfolio-options"></div>
 
     <div id="upload-error" class="upload-error hidden"></div>
-    <div id="upload-loading" class="upload-loading hidden">Connecting to Google Sheets…</div>
-
-    <details class="format-help">
-      <summary>How to set up</summary>
-      <ol class="setup-steps">
-        <li>Open your Google Sheet in the browser.</li>
-        <li>Click <strong>Share</strong> → change access to <strong>"Anyone with the link"</strong> → Viewer.</li>
-        <li>Copy the URL from your browser and paste it above.</li>
-      </ol>
-      <p style="margin-top:10px">Your sheet must have these columns:</p>
-      <table class="format-table">
-        <tr><th>Column</th><th>Example</th></tr>
-        <tr><td>ticker</td><td>1150.SR</td></tr>
-        <tr><td>company</td><td>alinma</td></tr>
-        <tr><td>date</td><td>2022-01-22</td></tr>
-        <tr><td>purchase price</td><td>16.40</td></tr>
-        <tr><td>quantity</td><td>1840</td></tr>
-        <tr><td>status</td><td>buy / sell / stock split</td></tr>
-        <tr><td>cost</td><td>30150.00</td></tr>
-      </table>
-    </details>
+    <div id="upload-loading" class="upload-loading hidden">Loading portfolio…</div>
   </div>
 </div>
 

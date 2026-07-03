@@ -14,6 +14,11 @@ app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 TASI_TICKER = "^TASI.SR"
 REQUIRED_COLS = ["ticker", "company", "date", "purchase price", "quantity", "status", "cost"]
 
+PORTFOLIOS = {
+    "My Portfolio": "https://docs.google.com/spreadsheets/d/1qy6kPvDVB4pn16LX5grFznmSZv-NbyrBjrO1qYcgEkw/edit?usp=sharing",
+    "My Father's Portfolio": "https://docs.google.com/spreadsheets/d/12Fc63gUKdXcI2STDKaKe-wKHfEc7teUdS5A4UdRPZ6w/edit?usp=sharing",
+}
+
 # In-memory session store: session_id -> DataFrame
 _sessions = {}
 
@@ -114,12 +119,42 @@ def load_sheet(url):
     return normalize_df(df)
 
 
+@app.route("/api/load-file", methods=["POST"])
+def load_file():
+    """Load from an uploaded .xlsx file (for local use)."""
+    f = request.files.get("file")
+    if not f:
+        return jsonify({"error": "No file provided."}), 400
+    try:
+        df = pd.read_excel(f)
+        df = normalize_df(df)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    sid = str(uuid.uuid4())
+    _sessions[sid] = df
+    return jsonify({"session_id": sid, "rows": len(df), "tickers": df["ticker"].nunique()})
+
+
+@app.route("/api/portfolios")
+def list_portfolios():
+    return jsonify({"portfolios": list(PORTFOLIOS.keys())})
+
+
 @app.route("/api/load", methods=["POST"])
 def load():
     data = request.get_json(silent=True) or {}
-    url = (data.get("url") or "").strip()
-    if not url:
-        return jsonify({"error": "No URL provided."}), 400
+
+    # Load by name (dropdown selection)
+    name = (data.get("name") or "").strip()
+    if name:
+        if name not in PORTFOLIOS:
+            return jsonify({"error": f"Unknown portfolio: {name}"}), 400
+        url = PORTFOLIOS[name]
+    else:
+        url = (data.get("url") or "").strip()
+        if not url:
+            return jsonify({"error": "No portfolio selected."}), 400
+
     try:
         df = load_sheet(url)
     except Exception as e:

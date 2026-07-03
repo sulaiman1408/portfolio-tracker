@@ -30,40 +30,51 @@ function card(label, value, sub, cls) {
 let sessionId = null;
 let pieChart = null, plChart = null, histChart = null;
 
-// ── load from Google Sheet URL ────────────────────────────────────────────────
-const loadBtn  = $("load-btn");
-const urlInput = $("sheet-url");
+// ── portfolio selector ────────────────────────────────────────────────────────
+async function initPortfolioSelector() {
+  const container = $("portfolio-options");
+  try {
+    const res  = await fetch("/api/portfolios");
+    const data = await res.json();
+    container.innerHTML = data.portfolios.map(name => `
+      <button class="portfolio-btn" data-name="${name}">${name}</button>
+    `).join("");
+    container.querySelectorAll(".portfolio-btn").forEach(btn => {
+      btn.addEventListener("click", () => handleLoad(btn.dataset.name));
+    });
+  } catch (e) {
+    container.innerHTML = `<p style="color:red">Failed to load portfolios: ${e.message}</p>`;
+  }
+}
 
-loadBtn.addEventListener("click", handleLoad);
-urlInput.addEventListener("keydown", e => { if (e.key === "Enter") handleLoad(); });
-
-async function handleLoad() {
-  const url = urlInput.value.trim();
-  if (!url) { showUploadError("Please paste your Google Sheet URL."); return; }
-
+async function handleLoad(name) {
   const errEl  = $("upload-error");
   const loadEl = $("upload-loading");
   errEl.classList.add("hidden");
   loadEl.classList.remove("hidden");
-  loadBtn.disabled = true;
+
+  // Highlight selected button
+  document.querySelectorAll(".portfolio-btn").forEach(b => b.classList.remove("active"));
+  document.querySelector(`.portfolio-btn[data-name="${name}"]`)?.classList.add("active");
 
   try {
     const res  = await fetch("/api/load", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ name }),
     });
     const data = await res.json();
     if (!res.ok) { showUploadError(data.error); return; }
     sessionId = data.session_id;
-    showDashboard();
+    showDashboard(name);
   } catch (e) {
-    showUploadError("Failed to load sheet: " + e.message);
+    showUploadError("Failed to load: " + e.message);
   } finally {
     loadEl.classList.add("hidden");
-    loadBtn.disabled = false;
   }
 }
+
+initPortfolioSelector();
 
 function showUploadError(msg) {
   const el = $("upload-error");
@@ -72,9 +83,10 @@ function showUploadError(msg) {
 }
 
 // ── dashboard ──────────────────────────────────────────────────────────────────
-function showDashboard() {
+function showDashboard(name) {
   $("upload-view").classList.add("hidden");
   $("dashboard-view").classList.remove("hidden");
+  if (name) $("nav-brand").textContent = "📈 " + name;
   loadSummary();
   loadHistory();
 }
