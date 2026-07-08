@@ -297,17 +297,41 @@ def api_history():
     valid_idx = price_data.index[price_data.index >= first_inv]
     if valid_idx.empty:
         return jsonify({"error": "No price data found for portfolio period."}), 500
+
+    # Apply optional date range filter
+    date_from = request.args.get("from")
+    date_to   = request.args.get("to")
     anchor = valid_idx[0]
+    if date_from:
+        try:
+            ts_from = pd.Timestamp(date_from)
+            # Never go before the first investment
+            anchor = max(anchor, ts_from)
+        except Exception:
+            pass
 
-    pv = port_value.loc[anchor:].resample("W").last().dropna()
-    pc = port_cost.loc[anchor:].resample("W").last().reindex(pv.index).ffill().fillna(0)
+    end_ts = price_data.index[-1]
+    if date_to:
+        try:
+            end_ts = min(end_ts, pd.Timestamp(date_to))
+        except Exception:
+            pass
 
-    pv_anchor = pv.iloc[0] if pv.iloc[0] != 0 else 1
-    port_return = ((pv - pv_anchor) / pv_anchor * 100).round(2)
+    pv = port_value.loc[anchor:end_ts].resample("W").last().dropna()
+    pc = port_cost.loc[anchor:end_ts].resample("W").last().reindex(pv.index).ffill().fillna(0)
+
+    if pv.empty:
+        return jsonify({"error": "No data in selected date range."}), 400
+
+    # Use P&L change (value - cost) to avoid spikes from new purchases
+    pl = pv - pc
+    pl_anchor = float(pl.iloc[0])
+    pv_anchor = float(pv.iloc[0]) if pv.iloc[0] != 0 else 1
+    port_return = ((pl - pl_anchor) / pv_anchor * 100).round(2)
 
     tasi_return = None
     if TASI_TICKER in price_data.columns:
-        tasi_s = price_data[TASI_TICKER].loc[anchor:].resample("W").last().reindex(pv.index).ffill()
+        tasi_s = price_data[TASI_TICKER].loc[anchor:end_ts].resample("W").last().reindex(pv.index).ffill()
         t_anchor = tasi_s.iloc[0] if tasi_s.iloc[0] != 0 else 1
         tasi_return = ((tasi_s - t_anchor) / t_anchor * 100).round(2).tolist()
 

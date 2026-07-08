@@ -320,6 +320,17 @@ input[type="date"]:focus { border-color: var(--blue); }
 }
 .btn-apply:hover { background: var(--blue-dark); }
 
+.btn-outline-sm {
+  padding: 8px 14px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn-outline-sm:hover { border-color: var(--blue); color: var(--blue); }
+
 /* ── TABLE ─────────────────────────────── */
 .table-wrap { overflow-x: auto; }
 

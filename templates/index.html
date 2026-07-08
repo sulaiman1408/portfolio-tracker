@@ -56,10 +56,18 @@
 
     <!-- Performance over time -->
     <section class="chart-card full-width">
-      <div class="perf-header">
+      <div class="table-controls">
         <h3>Portfolio Performance vs TASI</h3>
-        <div id="history-status" class="history-status">Loading chart…</div>
+        <div class="table-actions">
+          <label class="date-label">From</label>
+          <input id="hist-from" type="date">
+          <label class="date-label">To</label>
+          <input id="hist-to" type="date">
+          <button id="hist-apply" class="btn-apply">Apply</button>
+          <button id="hist-reset" class="btn-outline-sm">All Time</button>
+        </div>
       </div>
+      <div id="history-status" class="history-status" style="margin-bottom:8px">Loading chart…</div>
       <div class="chart-wrap-tall"><canvas id="history-chart"></canvas></div>
     </section>
 

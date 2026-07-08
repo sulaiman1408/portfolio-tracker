@@ -88,6 +88,7 @@ function showDashboard(name) {
   $("dashboard-view").classList.remove("hidden");
   if (name) $("nav-brand").textContent = "📈 " + name;
   loadSummary();
+  initHistoryControls();
   loadHistory();
   initPerfTable();
   loadPerfTable();
@@ -235,10 +236,28 @@ function renderPlBars(bars) {
 }
 
 // ── history chart ──────────────────────────────────────────────────────────────
+function initHistoryControls() {
+  const today = new Date().toISOString().slice(0, 10);
+  $("hist-to").value = today;
+  $("hist-from").value = "";
+
+  $("hist-apply").addEventListener("click", loadHistory);
+  $("hist-reset").addEventListener("click", () => {
+    $("hist-from").value = "";
+    $("hist-to").value = today;
+    loadHistory();
+  });
+}
+
 async function loadHistory() {
   $("history-status").textContent = "Loading…";
+  const from = $("hist-from").value;
+  const to   = $("hist-to").value;
+  const params = new URLSearchParams({ session_id: sessionId });
+  if (from) params.set("from", from);
+  if (to)   params.set("to",   to);
   try {
-    const res = await fetch(`/api/history?session_id=${sessionId}`);
+    const res = await fetch(`/api/history?${params}`);
     const data = await res.json();
     if (!res.ok) { $("history-status").textContent = "Failed: " + data.error; return; }
     renderHistory(data);
