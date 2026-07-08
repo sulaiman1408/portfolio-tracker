@@ -335,9 +335,12 @@ def api_history():
         t_anchor = tasi_s.iloc[0] if tasi_s.iloc[0] != 0 else 1
         tasi_return = ((tasi_s - t_anchor) / t_anchor * 100).round(2).tolist()
 
+    pl_sar = (pl - pl_anchor).round(2)
+
     return jsonify({
         "dates": [d.strftime("%Y-%m-%d") for d in pv.index],
         "portfolio_return": port_return.tolist(),
+        "portfolio_pl_sar": pl_sar.tolist(),
         "cost_invested": pc.round(2).tolist(),
         "portfolio_value": pv.round(2).tolist(),
         "tasi_return": tasi_return,

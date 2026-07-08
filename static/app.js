@@ -273,8 +273,9 @@ function renderHistory(data) {
 
   const datasets = [
     {
-      label: "My Portfolio",
+      label: "P&L %",
       data: data.portfolio_return,
+      yAxisID: "yPct",
       borderColor: "#2563eb",
       backgroundColor: "rgba(37,99,235,.08)",
       fill: true,
@@ -282,12 +283,25 @@ function renderHistory(data) {
       pointRadius: 0,
       borderWidth: 2.5,
     },
+    {
+      label: "P&L (SAR)",
+      data: data.portfolio_pl_sar,
+      yAxisID: "ySAR",
+      borderColor: "#059669",
+      backgroundColor: "transparent",
+      fill: false,
+      tension: 0.3,
+      pointRadius: 0,
+      borderWidth: 2,
+      borderDash: [4, 3],
+    },
   ];
 
   if (data.tasi_return) {
     datasets.push({
-      label: "TASI Index",
+      label: "TASI %",
       data: data.tasi_return,
+      yAxisID: "yPct",
       borderColor: "#f59e0b",
       backgroundColor: "transparent",
       fill: false,
@@ -309,7 +323,11 @@ function renderHistory(data) {
         legend: { labels: { font: { size: 12 }, boxWidth: 20 } },
         tooltip: {
           callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? "+" : ""}${(+ctx.raw).toFixed(2)}%`,
+            label: ctx => {
+              if (ctx.dataset.yAxisID === "ySAR")
+                return ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? "+" : ""}${fmtSAR(ctx.raw).replace("SAR ", "SAR ")}`;
+              return ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? "+" : ""}${(+ctx.raw).toFixed(2)}%`;
+            },
           },
         },
       },
@@ -322,9 +340,22 @@ function renderHistory(data) {
           },
           grid: { color: "#f1f5f9" },
         },
-        y: {
+        yPct: {
+          position: "left",
           ticks: { callback: v => v + "%", font: { size: 11 } },
           grid: { color: "#f1f5f9" },
+        },
+        ySAR: {
+          position: "right",
+          ticks: {
+            callback: v => {
+              if (Math.abs(v) >= 1000) return (v >= 0 ? "+" : "") + Math.round(v / 1000) + "k";
+              return (v >= 0 ? "+" : "") + Math.round(v);
+            },
+            font: { size: 11 },
+            color: "#059669",
+          },
+          grid: { drawOnChartArea: false },
         },
       },
     },
